@@ -873,6 +873,9 @@ document.getElementById('print-btn').addEventListener('click', function() {
   var houseSvgEl = document.getElementById('house-svg');
   var placedEls  = Array.from(document.querySelectorAll('.placed-item'));
 
+  // Get the CURRENT dimensions of the house area to convert px → %
+  var houseRect = houseArea.getBoundingClientRect();
+
   var bgHTML = '';
   if (houseBgEl && houseBgEl.style.display !== 'none' && houseBgEl.src && !houseBgEl.src.endsWith('/')) {
     bgHTML = '<img src="' + houseBgEl.src + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;z-index:1;" />';
@@ -886,14 +889,15 @@ document.getElementById('print-btn').addEventListener('click', function() {
   var itemsHTML = '';
   placedEls.forEach(function(el) {
     var z    = el.style.zIndex || '20';
-    var left = el.style.left;
-    var top  = el.style.top;
+    // Convert absolute px to % of house area so they match in any print window size
+    var leftPct = (parseFloat(el.style.left) / houseRect.width  * 100).toFixed(3) + '%';
+    var topPct  = (parseFloat(el.style.top)  / houseRect.height * 100).toFixed(3) + '%';
     var im   = el.querySelector('img');
     var em   = el.querySelector('.placed-emoji');
     if (im) {
-      itemsHTML += '<img src="' + im.src + '" style="position:absolute;left:' + left + ';top:' + top + ';z-index:' + z + ';max-width:90px;max-height:90px;object-fit:contain;filter:drop-shadow(1px 4px 5px rgba(0,0,0,0.2));" />';
+      itemsHTML += '<img src="' + im.src + '" style="position:absolute;left:' + leftPct + ';top:' + topPct + ';z-index:' + z + ';max-width:90px;max-height:90px;object-fit:contain;filter:drop-shadow(1px 4px 5px rgba(0,0,0,0.2));" />';
     } else if (em) {
-      itemsHTML += '<div style="position:absolute;left:' + left + ';top:' + top + ';z-index:' + z + ';font-size:3rem;line-height:1;">' + em.textContent + '</div>';
+      itemsHTML += '<div style="position:absolute;left:' + leftPct + ';top:' + topPct + ';z-index:' + z + ';font-size:3rem;line-height:1;">' + em.textContent + '</div>';
     }
   });
 
@@ -903,7 +907,7 @@ document.getElementById('print-btn').addEventListener('click', function() {
 
   var css = [
     '* { margin:0; padding:0; box-sizing:border-box; }',
-    'html,body { width:100%; height:100%; background:#d8cfc5; }',
+    'html,body { width:100%; height:100%; background:#d8cfc5; overflow:hidden; }',
     '.scene { position:relative; width:100vw; height:100vh; overflow:hidden; background:#d8cfc5; }',
     '@media print {',
     '  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }',
@@ -920,10 +924,10 @@ document.getElementById('print-btn').addEventListener('click', function() {
     ot('style') + css + ct('style'),
     ct('head'),
     ot('body', 'onload="setTimeout(function(){window.print();},700);"'),
-    ot('div', 'style="position:relative;width:100vw;height:100vh;overflow:hidden;background:#d8cfc5;"'),
+    '<div class="scene">',
     bgHTML,
     itemsHTML,
-    ct('div'),
+    '</div>',
     ct('body'),
     ct('html')
   ];
