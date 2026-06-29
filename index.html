@@ -1,0 +1,899 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Sweet Vocab 🏠</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #FDF6EC;
+  --sage: #7A9E7E;
+  --terra: #C4704A;
+  --dark: #2D2D2D;
+  --panel: #2D2D2D;
+  --panel-text: #FDF6EC;
+  --muted: #888;
+  --card-locked: #3a3a3a;
+  --card-locked-b: #4a4a4a;
+  --card-unlocked: #1b3d1f;
+  --card-unlocked-b: #7A9E7E;
+  --card-placed: #252525;
+  --card-placed-b: #3a3a3a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--cream);
+  display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
+}
+
+/* HEADER */
+header {
+  background: var(--panel);
+  color: var(--panel-text);
+  padding: 7px 18px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+  border-bottom: 3px solid #1a1a1a;
+  z-index: 100;
+}
+header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
+.header-sub { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+.score-badge {
+  background: var(--sage); color: #fff;
+  font-family: 'Fredoka One', cursive; font-size: 0.82rem;
+  padding: 3px 13px; border-radius: 20px; white-space: nowrap;
+}
+.print-btn {
+  background: #444; color: var(--panel-text);
+  border: 1.5px solid #666; border-radius: 20px;
+  font-family: 'Fredoka One', cursive; font-size: 0.82rem;
+  padding: 3px 13px; cursor: pointer; white-space: nowrap;
+  transition: background 0.18s, border-color 0.18s;
+}
+.print-btn:hover { background: var(--terra); border-color: var(--terra); }
+
+/* LAYOUT */
+.game-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 248px; flex-shrink: 0;
+  background: var(--panel);
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding: 8px 8px 24px;
+  display: flex; flex-direction: column; gap: 4px;
+  border-right: 3px solid #1a1a1a;
+  /* ensure it takes full remaining height */
+  min-height: 0;
+  height: 100%;
+}
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: #1a1a1a; }
+.sidebar::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* CATEGORY */
+.category-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 6px 4px;
+  cursor: pointer;
+  border-radius: 8px;
+  margin-top: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  user-select: none;
+}
+.category-header:hover { background: rgba(255,255,255,0.05); }
+.category-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.category-arrow {
+  font-size: 0.65rem; color: #555;
+  transition: transform 0.22s;
+  flex-shrink: 0;
+}
+.category-arrow.open { transform: rotate(90deg); }
+.category-body {
+  display: flex; flex-direction: column; gap: 5px;
+  flex-shrink: 0;
+  /* NO overflow:hidden, NO max-height — let it breathe naturally */
+}
+.category-body.collapsed { display: none; }
+
+/* ITEM CARD */
+.item-card {
+  background: var(--card-locked);
+  border: 2px solid var(--card-locked-b);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex; flex-direction: row; align-items: center; gap: 9px;
+  transition: border-color 0.28s, background 0.28s, box-shadow 0.28s;
+  position: relative;
+  user-select: none;
+}
+.item-card.unlocked {
+  background: var(--card-unlocked);
+  border-color: var(--card-unlocked-b);
+  box-shadow: 0 0 10px rgba(122,158,126,0.22);
+  cursor: grab;
+  animation: popIn 0.32s cubic-bezier(.175,.885,.32,1.275);
+}
+.item-card.unlocked:active { cursor: grabbing; }
+.item-card.placed {
+  background: var(--card-placed);
+  border-color: var(--card-placed-b);
+  opacity: 0.48; cursor: default;
+}
+@keyframes popIn {
+  0%   { transform: scale(0.86); }
+  100% { transform: scale(1); }
+}
+
+/* image col */
+.card-img-col {
+  flex-shrink: 0; width: 58px; height: 58px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; border-radius: 9px; overflow: hidden;
+  background: rgba(0,0,0,0.18);
+}
+.card-img-col img {
+  width: 54px; height: 54px; object-fit: contain; pointer-events: none; display: block;
+}
+.item-card:not(.unlocked):not(.placed) .card-img-col img {
+  filter: grayscale(1) brightness(0.38) sepia(0.25);
+}
+.item-card.unlocked .card-img-col img,
+.item-card.placed   .card-img-col img {
+  filter: none;
+}
+.card-emoji { font-size: 2.1rem; line-height: 1; }
+.item-card:not(.unlocked):not(.placed) .card-emoji { filter: grayscale(1); opacity: 0.3; }
+.item-card.unlocked .card-emoji, .item-card.placed .card-emoji { filter: none; opacity: 1; }
+.lock-badge {
+  position: absolute; bottom: 2px; right: 2px;
+  font-size: 0.7rem; line-height: 1;
+}
+.item-card.unlocked .lock-badge, .item-card.placed .lock-badge { display: none; }
+
+/* text col */
+.card-text-col { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+/* letter tiles */
+.letter-row { display: flex; flex-wrap: wrap; gap: 2px; align-items: flex-end; }
+.ltile {
+  min-width: 16px; height: 22px;
+  border-bottom: 2.5px solid #555;
+  display: flex; align-items: flex-end; justify-content: center;
+  font-family: 'Fredoka One', cursive; font-size: 0.82rem;
+  text-transform: uppercase; padding-bottom: 1px;
+}
+.ltile.given  { color: #bbb; border-color: #555; }
+.ltile.filled { color: var(--sage); border-color: var(--sage); }
+.ltile.blank  { color: #444; border-color: #444; }
+.ltile.done   { color: #7fe88a; border-color: #7fe88a; }
+
+/* input */
+.card-input {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid #555; border-radius: 7px;
+  color: var(--panel-text);
+  font-family: 'Fredoka One', cursive; font-size: 0.88rem;
+  letter-spacing: 3px; text-transform: uppercase; text-align: center;
+  padding: 4px 6px; width: 100%; outline: none;
+  transition: border-color 0.22s, background 0.22s;
+}
+.card-input::placeholder { color: #4a4a4a; letter-spacing: 1px; font-size: 0.68rem; }
+.card-input:focus { border-color: var(--sage); background: rgba(122,158,126,0.08); }
+.card-input.correct { border-color: var(--terra); color: var(--terra); background: rgba(196,112,74,0.08); }
+.item-card.unlocked .card-input, .item-card.placed .card-input { display: none; }
+
+.card-status {
+  font-size: 0.62rem; font-weight: 800; text-align: center;
+  display: none;
+}
+.item-card.unlocked .card-status { display: block; color: var(--sage); }
+.item-card.placed   .card-status { display: block; color: #555; }
+.card-hint { font-size: 0.58rem; color: #555; text-align: center; font-style: italic; }
+.item-card.unlocked .card-hint, .item-card.placed .card-hint { display: none; }
+
+/* HOUSE */
+.house-area {
+  flex: 1; position: relative; overflow: hidden; background: #d8cfc5;
+}
+#house-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain; object-position: center;
+  pointer-events: none; z-index: 1;
+}
+#house-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 1; pointer-events: none;
+}
+#drop-zone {
+  position: absolute; inset: 0; z-index: 10; transition: background 0.2s;
+}
+#drop-zone.drag-over {
+  background: rgba(122,158,126,0.09);
+  outline: 3px dashed rgba(122,158,126,0.45); outline-offset: -6px;
+}
+
+/* placed items */
+.placed-item {
+  position: absolute; z-index: 20;
+  display: flex; flex-direction: column; align-items: center;
+  cursor: grab;
+  filter: drop-shadow(1px 4px 5px rgba(0,0,0,0.2));
+}
+.placed-item:active { cursor: grabbing; }
+.placed-item img {
+  max-width: 90px; max-height: 90px; object-fit: contain;
+  pointer-events: none; display: block;
+}
+.placed-emoji { font-size: 3rem; line-height: 1; pointer-events: none; }
+.placed-label {
+  font-family: 'Fredoka One', cursive; font-size: 0.6rem;
+  background: rgba(45,45,45,0.85); color: var(--cream);
+  padding: 1px 7px; border-radius: 8px;
+  opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; white-space: nowrap; margin-top: 2px;
+}
+.placed-item:hover .placed-label { opacity: 1; }
+
+/* LAYER POPUP */
+#layer-popup {
+  display: none; position: fixed;
+  background: var(--panel); color: var(--panel-text);
+  border-radius: 12px; padding: 11px; z-index: 500;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4); min-width: 155px;
+}
+#layer-popup h4 {
+  font-family: 'Fredoka One', cursive; font-size: 0.88rem;
+  color: var(--sage); margin-bottom: 7px;
+}
+.layer-btn {
+  display: block; width: 100%;
+  background: #3d3d3d; border: 1px solid #555;
+  color: var(--panel-text); padding: 5px 9px;
+  border-radius: 7px; margin-bottom: 4px;
+  cursor: pointer; font-family: 'Nunito', sans-serif;
+  font-size: 0.76rem; font-weight: 800; text-align: left;
+  transition: background 0.16s;
+}
+.layer-btn:hover { background: var(--sage); }
+.layer-btn.danger { background: #5a2a2a; border-color: #8a3a3a; }
+.layer-btn.danger:hover { background: var(--terra); }
+.layer-btn.cancel { background: #3d3d3d; }
+
+/* EMPTY HINT */
+.empty-hint {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center; pointer-events: none; z-index: 5; color: #b8a898;
+}
+.empty-hint .big { font-size: 4.5rem; }
+.empty-hint p { font-family: 'Fredoka One', cursive; font-size: 1rem; margin-top: 8px; }
+
+/* INSTRUCTIONS */
+.instructions {
+  position: absolute; bottom: 11px; right: 11px;
+  background: rgba(45,45,45,0.88); color: #999;
+  border-radius: 10px; padding: 7px 11px;
+  font-size: 0.6rem; line-height: 1.75; z-index: 50;
+  max-width: 170px; pointer-events: none;
+}
+.instructions strong { color: var(--cream); }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 26px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--sage); color: #fff;
+  font-family: 'Fredoka One', cursive; font-size: 0.95rem;
+  padding: 9px 24px; border-radius: 30px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25); z-index: 999;
+  opacity: 0; transition: transform 0.38s cubic-bezier(.175,.885,.32,1.275), opacity 0.38s;
+  pointer-events: none; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* PRINT */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body, html { overflow: visible !important; height: auto !important; margin: 0 !important; }
+  header, .sidebar, .instructions, #drop-zone, #layer-popup, #toast, .empty-hint, .placed-label { display: none !important; }
+  .game-layout { display: block !important; height: 100vh !important; }
+  .house-area { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 Home Sweet Vocab</h1>
+  <span class="header-sub">Spell the word → unlock → decorate!</span>
+  <span class="score-badge" id="score-display">✔ 0 / 0</span>
+  <button class="print-btn" id="print-btn">🖨️ Print</button>
+</header>
+
+<div class="game-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="house-area" id="house-area">
+    <img id="house-bg" src="home1.png" alt="House"
+         onerror="this.style.display='none'; document.getElementById('house-svg').style.display='block';" />
+    <svg id="house-svg" viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg"
+         preserveAspectRatio="xMidYMax meet" style="display:none;">
+      <defs>
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C9DDED"/><stop offset="100%" stop-color="#E5DDD4"/>
+        </linearGradient>
+        <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#EDE3D8"/><stop offset="100%" stop-color="#D9CBBF"/>
+        </linearGradient>
+        <linearGradient id="roofG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#8B6355"/><stop offset="100%" stop-color="#5E3520"/>
+        </linearGradient>
+      </defs>
+      <rect width="800" height="560" fill="url(#skyG)"/>
+      <rect y="480" width="800" height="80" fill="#7CAD68" opacity="0.35"/>
+      <rect x="110" y="215" width="580" height="265" fill="url(#wallG)" rx="3"/>
+      <polygon points="90,218 400,62 710,218" fill="url(#roofG)"/>
+      <polygon points="90,218 400,62 710,218 700,223 400,70 100,223" fill="#3D2010" opacity="0.3"/>
+      <rect x="545" y="95" width="38" height="76" fill="#7A4030" rx="2"/>
+      <rect x="538" y="90" width="52" height="12" fill="#5A2810" rx="2"/>
+      <rect x="345" y="344" width="110" height="136" fill="#7B5E3A" rx="4"/>
+      <circle cx="445" cy="412" r="5" fill="#C4A060"/>
+      <path d="M345,344 Q400,305 455,344" fill="#8B6844" opacity="0.65"/>
+      <rect x="148" y="272" width="126" height="96" fill="#B8D8EE" rx="3" opacity="0.9"/>
+      <rect x="148" y="272" width="126" height="96" fill="none" stroke="#5A3D1E" stroke-width="2.5" rx="3"/>
+      <line x1="211" y1="272" x2="211" y2="368" stroke="#5A3D1E" stroke-width="1.5"/>
+      <line x1="148" y1="320" x2="274" y2="320" stroke="#5A3D1E" stroke-width="1.5"/>
+      <rect x="141" y="365" width="140" height="7" fill="#7B5E3A" rx="2"/>
+      <rect x="526" y="272" width="126" height="96" fill="#B8D8EE" rx="3" opacity="0.9"/>
+      <rect x="526" y="272" width="126" height="96" fill="none" stroke="#5A3D1E" stroke-width="2.5" rx="3"/>
+      <line x1="589" y1="272" x2="589" y2="368" stroke="#5A3D1E" stroke-width="1.5"/>
+      <line x1="526" y1="320" x2="652" y2="320" stroke="#5A3D1E" stroke-width="1.5"/>
+      <rect x="519" y="365" width="140" height="7" fill="#7B5E3A" rx="2"/>
+      <rect x="110" y="448" width="580" height="32" fill="#B09070"/>
+      <rect x="110" y="443" width="580" height="8" fill="#906840" opacity="0.5"/>
+      <circle cx="690" cy="88" r="36" fill="#F9E05A" opacity="0.75"/>
+      <circle cx="690" cy="88" r="28" fill="#F9E05A" opacity="0.9"/>
+      <ellipse cx="175" cy="82" rx="55" ry="20" fill="white" opacity="0.65"/>
+      <ellipse cx="210" cy="68" rx="38" ry="18" fill="white" opacity="0.65"/>
+      <path d="M340,480 Q370,505 355,535 L445,535 Q430,505 460,480Z" fill="#C8B898" opacity="0.6"/>
+    </svg>
+
+    <div class="empty-hint" id="empty-hint">
+      <div class="big">🪑</div>
+      <p>Spell a word to unlock,<br>then drag it home!</p>
+    </div>
+    <div id="drop-zone"></div>
+    <div class="instructions">
+      <strong>How to play:</strong><br>
+      1️⃣ Type the missing letters<br>
+      2️⃣ Unlock the object 🔓<br>
+      3️⃣ Drag it into the house<br>
+      4️⃣ Move &amp; choose layer<br>
+      <em style="color:#555;">Click placed items to manage</em>
+    </div>
+  </main>
+</div>
+
+<div id="layer-popup">
+  <h4>📐 Position</h4>
+  <button class="layer-btn" id="btn-front">⬆ Bring to Front</button>
+  <button class="layer-btn" id="btn-back">⬇ Send to Back</button>
+  <button class="layer-btn danger" id="btn-remove">🗑 Remove</button>
+  <button class="layer-btn cancel" id="btn-cancel">✕ Cancel</button>
+</div>
+<div id="toast"></div>
+
+<script>
+// ─── ITEMS CONFIG ────────────────────────────────────────────────────────────
+// hint: use _ for blanks; give letters for ones shown; all caps or lower both ok
+const CATEGORIES = [
+  {
+    label: '🛏 Bedroom Furniture',
+    items: [
+      { name: 'Bed',       hint: 'B__',     img: 'bed1.png'      },
+      { name: 'Wardrobe',  hint: 'W_______',img: 'wardrobe1.png' },
+      { name: 'Pillow',    hint: 'P_____',  img: 'pillow1.png'   },
+      { name: 'Blanket',   hint: 'B______', img: 'blanket1.png'  },
+    ]
+  },
+  {
+    label: '🛋 Living Room',
+    items: [
+      { name: 'Sofa',      hint: 'S___',    img: 'sofa1.png'     },
+      { name: 'Chair',     hint: 'C____',   img: 'chair1.png'    },
+      { name: 'Table',     hint: 'T____',   img: 'table1.png'    },
+      { name: 'Shelf',     hint: 'S____',   img: 'shelf1.png'    },
+      { name: 'Carpet',    hint: 'C_____',  img: 'carpet1.png'   },
+    ]
+  },
+  {
+    label: '🍳 Kitchen',
+    items: [
+      { name: 'Fridge',    hint: 'F_____',  img: 'fridge1.png'   },
+      { name: 'Oven',      hint: 'O___',    img: 'oven1.png'     },
+      { name: 'Sink',      hint: 'S___',    img: 'sink1.png'     },
+      { name: 'Cup',       hint: 'C__',     img: 'cup1.png'      },
+      { name: 'Plate',     hint: 'P____',   img: 'plate1.png'    },
+    ]
+  },
+  {
+    label: '💡 Lights',
+    items: [
+      { name: 'Lamp',      hint: 'L___',    img: 'lamp1.png'     },
+      { name: 'Candle',    hint: 'C_____',  img: 'candle1.png'   },
+    ]
+  },
+  {
+    label: '🪟 Windows & Doors',
+    items: [
+      { name: 'Window',    hint: 'W_____',  img: 'window1.png'   },
+      { name: 'Door',      hint: 'D___',    img: 'door1.png'     },
+      { name: 'Curtain',   hint: 'C______', img: 'curtain1.png'  },
+    ]
+  },
+  {
+    label: '🪴 Decorations',
+    items: [
+      { name: 'Plant',     hint: 'P____',   img: 'vase_w_plant1.png' },
+      { name: 'Mirror',    hint: 'M_____',  img: 'mirror1.png'   },
+      { name: 'Clock',     hint: 'C____',   img: 'clock1.png'    },
+      { name: 'Picture',   hint: 'P_______',img: 'picture1.png'  },
+      { name: 'Vase',      hint: 'V___',    img: 'vase1.png'     },
+    ]
+  },
+];
+
+// ─── EMOJI FALLBACKS ─────────────────────────────────────────────────────────
+const EMOJI = {
+  bed:'🛏️',wardrobe:'🚪',pillow:'🛏️',blanket:'🛏️',
+  sofa:'🛋️',chair:'🪑',table:'🪵',shelf:'📚',carpet:'🟫',
+  fridge:'🧊',oven:'🍳',sink:'🚿',cup:'☕',plate:'🍽️',
+  lamp:'💡',candle:'🕯️',
+  window:'🪟',door:'🚪',curtain:'🪟',
+  plant:'🪴',mirror:'🪞',clock:'🕐',picture:'🖼️',vase:'🏺',
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let allItems   = [];   // flat list of all item objects
+let dragging   = null; // item being dragged from sidebar
+let activeEl   = null; // placed DOM element selected for layer popup
+let zTop       = 30;
+let score      = 0;
+
+const sidebar     = document.getElementById('sidebar');
+const houseArea   = document.getElementById('house-area');
+const dropZone    = document.getElementById('drop-zone');
+const scoreEl     = document.getElementById('score-display');
+const toastEl     = document.getElementById('toast');
+const emptyHint   = document.getElementById('empty-hint');
+const layerPopup  = document.getElementById('layer-popup');
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(function init() {
+  let globalIndex = 0;
+  CATEGORIES.forEach(cat => {
+    // Category header
+    const header = document.createElement('div');
+    header.className = 'category-header';
+    header.innerHTML = '<span class="category-label">' + cat.label + '</span><span class="category-arrow open">▶</span>';
+    sidebar.appendChild(header);
+
+    // Category body
+    const body = document.createElement('div');
+    body.className = 'category-body';
+    sidebar.appendChild(body);
+
+    header.addEventListener('click', () => {
+      const arrow = header.querySelector('.category-arrow');
+      const isOpen = !body.classList.contains('collapsed');
+      body.classList.toggle('collapsed', isOpen);
+      arrow.classList.toggle('open', !isOpen);
+    });
+
+    cat.items.forEach(cfg => {
+      const item = {
+        id:       'item' + globalIndex++,
+        name:     cfg.name,
+        hint:     cfg.hint || (cfg.name[0] + '_'.repeat(cfg.name.length - 1)),
+        img:      cfg.img || null,
+        unlocked: false,
+        placed:   false,
+      };
+      allItems.push(item);
+      body.appendChild(makeCard(item));
+    });
+  });
+  updateScore();
+})();
+
+// ─── MAKE CARD ────────────────────────────────────────────────────────────────
+function makeCard(item) {
+  const card = document.createElement('div');
+  card.className = 'item-card' + (item.unlocked ? ' unlocked' : '') + (item.placed ? ' placed' : '');
+  card.id = 'card-' + item.id;
+
+  // Image col
+  const imgCol = document.createElement('div');
+  imgCol.className = 'card-img-col';
+
+  if (item.img) {
+    const im = document.createElement('img');
+    im.src = item.img;
+    im.alt = item.name;
+    im.onerror = function() {
+      im.remove();
+      const em = document.createElement('div');
+      em.className = 'card-emoji';
+      em.textContent = EMOJI[item.name.toLowerCase()] || '📦';
+      imgCol.insertBefore(em, imgCol.firstChild);
+    };
+    imgCol.appendChild(im);
+  } else {
+    const em = document.createElement('div');
+    em.className = 'card-emoji';
+    em.textContent = EMOJI[item.name.toLowerCase()] || '📦';
+    imgCol.appendChild(em);
+  }
+
+  const lockBadge = document.createElement('span');
+  lockBadge.className = 'lock-badge';
+  lockBadge.textContent = '🔒';
+  imgCol.appendChild(lockBadge);
+  card.appendChild(imgCol);
+
+  // Text col
+  const textCol = document.createElement('div');
+  textCol.className = 'card-text-col';
+
+  // Letter row
+  const letterRow = document.createElement('div');
+  letterRow.className = 'letter-row';
+  letterRow.id = 'lr-' + item.id;
+  renderTiles(letterRow, item, '');
+  textCol.appendChild(letterRow);
+
+  if (!item.unlocked && !item.placed) {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'card-input';
+    inp.id = 'inp-' + item.id;
+    inp.maxLength = item.name.length;
+    inp.placeholder = 'type here...';
+    inp.autocomplete = 'off';
+    inp.spellcheck = false;
+    inp.addEventListener('input', function() { checkInput(item, inp); });
+    textCol.appendChild(inp);
+
+    const hint = document.createElement('div');
+    hint.className = 'card-hint';
+    hint.textContent = item.name.length + ' letters';
+    textCol.appendChild(hint);
+  }
+
+  const status = document.createElement('div');
+  status.className = 'card-status';
+  status.textContent = item.placed ? '✔ placed in home' : '✔ drag into the house →';
+  textCol.appendChild(status);
+
+  card.appendChild(textCol);
+
+  if (item.unlocked && !item.placed) {
+    enableSidebarDrag(card, item);
+  }
+
+  return card;
+}
+
+// Rebuild the card in-place (same parent, same position in DOM)
+function rebuildCard(item) {
+  const old = document.getElementById('card-' + item.id);
+  if (!old) return;
+  const parent = old.parentNode;
+  const next   = old.nextSibling;
+  old.remove();
+  const fresh = makeCard(item);
+  if (next) parent.insertBefore(fresh, next);
+  else parent.appendChild(fresh);
+}
+
+// ─── LETTER TILES ─────────────────────────────────────────────────────────────
+function renderTiles(container, item, typed) {
+  container.innerHTML = '';
+  if (item.unlocked) {
+    for (const ch of item.name) {
+      const t = document.createElement('span');
+      t.className = 'ltile done';
+      t.textContent = ch.toUpperCase();
+      container.appendChild(t);
+    }
+    return;
+  }
+  let ti = 0;
+  for (let i = 0; i < item.hint.length; i++) {
+    const t = document.createElement('span');
+    t.className = 'ltile';
+    if (item.hint[i] !== '_') {
+      t.classList.add('given');
+      t.textContent = item.hint[i].toUpperCase();
+    } else {
+      const ch = (typed[ti] || '');
+      t.textContent = ch ? ch.toUpperCase() : '_';
+      t.classList.add(ch ? 'filled' : 'blank');
+      ti++;
+    }
+    container.appendChild(t);
+  }
+}
+
+// ─── INPUT CHECK ──────────────────────────────────────────────────────────────
+function checkInput(item, inp) {
+  if (item.unlocked) return;
+  const typed = inp.value.replace(/\s/g, '');
+  const lr = document.getElementById('lr-' + item.id);
+  if (lr) renderTiles(lr, item, typed);
+
+  let full = '', ti = 0;
+  for (let i = 0; i < item.hint.length; i++) {
+    if (item.hint[i] !== '_') { full += item.hint[i]; }
+    else { full += (typed[ti] || ''); ti++; }
+  }
+  if (full.toUpperCase() === item.name.toUpperCase()) {
+    inp.classList.add('correct');
+    setTimeout(function() { unlockItem(item); }, 300);
+  }
+}
+
+function unlockItem(item) {
+  item.unlocked = true;
+  score++;
+  updateScore();
+  rebuildCard(item);
+  showToast('🎉 "' + item.name + '" unlocked! Drag it into your home!');
+}
+
+// ─── DRAG FROM SIDEBAR ────────────────────────────────────────────────────────
+function enableSidebarDrag(card, item) {
+  card.setAttribute('draggable', 'true');
+  card.addEventListener('dragstart', function(e) {
+    dragging = item;
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/plain', item.id);
+  });
+  card.addEventListener('touchstart', function() { dragging = item; }, { passive: true });
+}
+
+// ─── DROP ZONE ────────────────────────────────────────────────────────────────
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('drag-over'); });
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (!dragging) return;
+  const r = houseArea.getBoundingClientRect();
+  placeItem(dragging, e.clientX - r.left, e.clientY - r.top);
+  dragging = null;
+});
+
+// Touch drop
+var tGhost = null;
+document.addEventListener('touchmove', function(e) {
+  if (!dragging) return;
+  const t = e.touches[0];
+  if (!tGhost) {
+    tGhost = document.createElement('div');
+    tGhost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;opacity:0.7;font-size:2.5rem;';
+    tGhost.textContent = EMOJI[dragging.name.toLowerCase()] || '📦';
+    document.body.appendChild(tGhost);
+  }
+  tGhost.style.left = (t.clientX - 22) + 'px';
+  tGhost.style.top  = (t.clientY - 22) + 'px';
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchend', function(e) {
+  if (!dragging) return;
+  if (tGhost) { tGhost.remove(); tGhost = null; }
+  const t = e.changedTouches[0];
+  const r = houseArea.getBoundingClientRect();
+  const x = t.clientX - r.left, y = t.clientY - r.top;
+  if (x >= 0 && y >= 0 && x <= r.width && y <= r.height) placeItem(dragging, x, y);
+  dragging = null;
+});
+
+// ─── PLACE ITEM ───────────────────────────────────────────────────────────────
+function placeItem(item, x, y) {
+  if (item.placed) return;
+  item.placed = true;
+  rebuildCard(item);
+
+  const el = document.createElement('div');
+  el.className = 'placed-item';
+  el.dataset.id = item.id;
+  el.style.left = (x - 45) + 'px';
+  el.style.top  = (y - 45) + 'px';
+  el.style.zIndex = zTop++;
+
+  if (item.img) {
+    const im = document.createElement('img');
+    im.src = item.img;
+    im.alt = item.name;
+    im.onerror = function() {
+      im.remove();
+      const em = document.createElement('div');
+      em.className = 'placed-emoji';
+      em.textContent = EMOJI[item.name.toLowerCase()] || '📦';
+      el.insertBefore(em, el.firstChild);
+    };
+    el.appendChild(im);
+  } else {
+    const em = document.createElement('div');
+    em.className = 'placed-emoji';
+    em.textContent = EMOJI[item.name.toLowerCase()] || '📦';
+    el.appendChild(em);
+  }
+
+  const lbl = document.createElement('div');
+  lbl.className = 'placed-label';
+  lbl.textContent = item.name;
+  el.appendChild(lbl);
+
+  // Drag to reposition
+  var isDragging = false, ox, oy, oL, oT, moved;
+  el.addEventListener('mousedown', function(e) {
+    isDragging = true; moved = false;
+    ox = e.clientX; oy = e.clientY;
+    oL = parseInt(el.style.left); oT = parseInt(el.style.top);
+    el.style.zIndex = zTop++;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - ox, dy = e.clientY - oy;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    el.style.left = (oL + dx) + 'px';
+    el.style.top  = (oT + dy) + 'px';
+  });
+  document.addEventListener('mouseup', function() { isDragging = false; });
+  el.addEventListener('click', function(e) {
+    if (!moved) { e.stopPropagation(); showLayerPopup(el, e.clientX, e.clientY); }
+  });
+  el.addEventListener('contextmenu', function(e) {
+    e.preventDefault(); showLayerPopup(el, e.clientX, e.clientY);
+  });
+
+  houseArea.appendChild(el);
+  updateEmptyHint();
+}
+
+// ─── LAYER POPUP ──────────────────────────────────────────────────────────────
+function showLayerPopup(el, cx, cy) {
+  activeEl = el;
+  layerPopup.style.left = Math.min(cx + 4, window.innerWidth - 170) + 'px';
+  layerPopup.style.top  = Math.min(cy + 4, window.innerHeight - 175) + 'px';
+  layerPopup.style.display = 'block';
+}
+function closeLayerPopup() { layerPopup.style.display = 'none'; activeEl = null; }
+
+document.getElementById('btn-front').addEventListener('click',  function() { if (activeEl) { activeEl.style.zIndex = zTop++; } closeLayerPopup(); });
+document.getElementById('btn-back').addEventListener('click',   function() { if (activeEl) { activeEl.style.zIndex = 11; } closeLayerPopup(); });
+document.getElementById('btn-cancel').addEventListener('click', closeLayerPopup);
+document.getElementById('btn-remove').addEventListener('click', function() {
+  if (!activeEl) return;
+  const id   = activeEl.dataset.id;
+  const item = allItems.find(function(it) { return it.id === id; });
+  if (item) { item.placed = false; rebuildCard(item); }
+  activeEl.remove();
+  closeLayerPopup();
+  updateEmptyHint();
+});
+document.addEventListener('click', function(e) {
+  if (layerPopup.style.display === 'block' && !layerPopup.contains(e.target)) closeLayerPopup();
+});
+
+// ─── PRINT ────────────────────────────────────────────────────────────────────
+document.getElementById('print-btn').addEventListener('click', function() {
+  var houseBgEl  = document.getElementById('house-bg');
+  var houseSvgEl = document.getElementById('house-svg');
+  var placedEls  = Array.from(document.querySelectorAll('.placed-item'));
+
+  var bgHTML = '';
+  if (houseBgEl && houseBgEl.style.display !== 'none' && houseBgEl.src && !houseBgEl.src.endsWith('/')) {
+    bgHTML = '<img src="' + houseBgEl.src + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;z-index:1;" />';
+  } else if (houseSvgEl && houseSvgEl.style.display !== 'none') {
+    var svgClone = houseSvgEl.cloneNode(true);
+    svgClone.removeAttribute('style');
+    svgClone.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:1;';
+    bgHTML = svgClone.outerHTML;
+  }
+
+  var itemsHTML = '';
+  placedEls.forEach(function(el) {
+    var z    = el.style.zIndex || '20';
+    var left = el.style.left;
+    var top  = el.style.top;
+    var im   = el.querySelector('img');
+    var em   = el.querySelector('.placed-emoji');
+    if (im) {
+      itemsHTML += '<img src="' + im.src + '" style="position:absolute;left:' + left + ';top:' + top + ';z-index:' + z + ';max-width:90px;max-height:90px;object-fit:contain;filter:drop-shadow(1px 4px 5px rgba(0,0,0,0.2));" />';
+    } else if (em) {
+      itemsHTML += '<div style="position:absolute;left:' + left + ';top:' + top + ';z-index:' + z + ';font-size:3rem;line-height:1;">' + em.textContent + '</div>';
+    }
+  });
+
+  // Helper: build a closing tag at runtime so the HTML parser never sees them literally
+  function ct(tag) { return '</' + tag + '>'; }
+  function ot(tag, attrs) { return '<' + tag + (attrs ? ' ' + attrs : '') + '>'; }
+
+  var css = [
+    '* { margin:0; padding:0; box-sizing:border-box; }',
+    'html,body { width:100%; height:100%; background:#d8cfc5; }',
+    '.scene { position:relative; width:100vw; height:100vh; overflow:hidden; background:#d8cfc5; }',
+    '@media print {',
+    '  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }',
+    '  @page { margin:0; size:landscape; }',
+    '}'
+  ].join('\n');
+
+  var parts = [
+    '<!DOCTYPE html>',
+    ot('html'),
+    ot('head'),
+    ot('meta', 'charset="UTF-8"'),
+    ot('title') + 'My Home' + ct('title'),
+    ot('style') + css + ct('style'),
+    ct('head'),
+    ot('body', 'onload="setTimeout(function(){window.print();},700);"'),
+    ot('div', 'style="position:relative;width:100vw;height:100vh;overflow:hidden;background:#d8cfc5;"'),
+    bgHTML,
+    itemsHTML,
+    ct('div'),
+    ct('body'),
+    ct('html')
+  ];
+
+  var blob = new Blob([parts.join('\n')], { type: 'text/html' });
+  var url  = URL.createObjectURL(blob);
+  var win  = window.open(url, '_blank', 'width=1100,height=780');
+  if (!win) {
+    URL.revokeObjectURL(url);
+    alert('Please allow pop-ups for this page to use Print.');
+    return;
+  }
+  setTimeout(function() { URL.revokeObjectURL(url); }, 15000);
+});
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function updateScore() {
+  var u = allItems.filter(function(i) { return i.unlocked; }).length;
+  scoreEl.textContent = '✔ ' + u + ' / ' + allItems.length;
+}
+function updateEmptyHint() {
+  emptyHint.style.display = document.querySelectorAll('.placed-item').length ? 'none' : 'block';
+}
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(function() { toastEl.classList.remove('show'); }, 2800);
+}
+</script>
+</body>
+</html>
