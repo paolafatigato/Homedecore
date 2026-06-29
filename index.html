@@ -191,7 +191,7 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
   padding: 4px 6px; width: 100%; outline: none;
   transition: border-color 0.22s, background 0.22s;
 }
-.card-input::placeholder { color: #4a4a4a; letter-spacing: 1px; font-size: 0.68rem; }
+.card-input::placeholder { color: #888; letter-spacing: 4px; font-size: 0.82rem; font-family: 'Fredoka One', cursive; }
 .card-input:focus { border-color: var(--sage); background: rgba(122,158,126,0.08); }
 .card-input.correct { border-color: var(--terra); color: var(--terra); background: rgba(196,112,74,0.08); }
 .item-card.unlocked .card-input, .item-card.placed .card-input { display: none; }
@@ -569,12 +569,19 @@ function makeCard(item) {
   textCol.appendChild(letterRow);
 
   if (!item.unlocked && !item.placed) {
+    // Count how many blanks the student must fill
+    var blanksCount = (item.hint.match(/_/g) || []).length;
+    // Build a readable placeholder from the hint: C _ _ _ _
+    var hintDisplay = item.hint.split('').map(function(ch) {
+      return ch === '_' ? '_' : ch.toUpperCase();
+    }).join(' ');
+
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.className = 'card-input';
     inp.id = 'inp-' + item.id;
-    inp.maxLength = item.name.length;
-    inp.placeholder = 'type here...';
+    inp.maxLength = blanksCount;           // only the missing letters
+    inp.placeholder = hintDisplay;         // e.g. "C _ _ _ _"
     inp.autocomplete = 'off';
     inp.spellcheck = false;
     inp.addEventListener('input', function() { checkInput(item, inp); });
@@ -582,7 +589,7 @@ function makeCard(item) {
 
     const hint = document.createElement('div');
     hint.className = 'card-hint';
-    hint.textContent = item.name.length + ' letters';
+    hint.textContent = blanksCount + ' missing letter' + (blanksCount === 1 ? '' : 's');
     textCol.appendChild(hint);
   }
 
