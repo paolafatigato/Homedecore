@@ -7,53 +7,57 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --cream: #FDF6EC;
-  --sage: #7A9E7E;
-  --terra: #C4704A;
-  --dark: #2D2D2D;
-  --panel: #2D2D2D;
-  --panel-text: #FDF6EC;
-  --muted: #888;
-  --card-locked: #3a3a3a;
-  --card-locked-b: #4a4a4a;
-  --card-unlocked: #1b3d1f;
-  --card-unlocked-b: #7A9E7E;
-  --card-placed: #252525;
-  --card-placed-b: #3a3a3a;
+  /* ── Palette ──────────────────────────── */
+  --sweet-salmon:    #FF9B85;
+  --vibrant-coral:   #EE6054;
+  --mauve-magic:     #E2B4FF;
+  --amethyst:        #8D3BB7;
+  --lime-cream:      #DEED71;
+  --sea-green:       #4B924D;
+  --antique-white:   #F9EEDC;
+  --vanilla-custard: #F0DFAD;
+  --cool-sky:        #48ACF0;
+  --yale-blue:       #084B83;
+  --panel-text:      #3D1060;
+  --card-locked:     #D8A0F8;
+  --card-locked-b:   #9A40C8;
+  --card-unlocked:   #4B924D;
+  --card-unlocked-b: var(--sea-green);
+  --card-placed:     #e8d2f8;
+  --card-placed-b:   #b78ace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Nunito', sans-serif;
-  background: var(--cream);
+  background: var(--antique-white);
   display: flex; flex-direction: column;
   height: 100vh; overflow: hidden;
 }
 
 /* HEADER */
 header {
-  background: var(--panel);
-  color: var(--panel-text);
+  background: var(--mauve-magic);
+  color: white;
   padding: 7px 18px;
   display: flex; align-items: center; gap: 12px;
   flex-shrink: 0;
-  border-bottom: 3px solid #1a1a1a;
   z-index: 100;
 }
 header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
-.header-sub { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+.header-sub { font-size: 0.72rem; color: var(--sea-green); margin-left: auto; }
 .score-badge {
-  background: var(--sage); color: #fff;
+  background: var(--lime-cream); color: #fff;
   font-family: 'Fredoka One', cursive; font-size: 0.82rem;
   padding: 3px 13px; border-radius: 20px; white-space: nowrap;
 }
 .print-btn {
-  background: #444; color: var(--panel-text);
-  border: 1.5px solid #666; border-radius: 20px;
+  background: var(--amethyst); color: var(--antique-white);
+  border: 1.5px solid var(--mauve-magic); border-radius: 20px;
   font-family: 'Fredoka One', cursive; font-size: 0.82rem;
   padding: 3px 13px; cursor: pointer; white-space: nowrap;
   transition: background 0.18s, border-color 0.18s;
 }
-.print-btn:hover { background: var(--terra); border-color: var(--terra); }
+.print-btn:hover { background: var(--vibrant-coral); border-color: var(--vibrant-coral); }
 
 /* LAYOUT */
 .game-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
@@ -61,20 +65,20 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 /* SIDEBAR */
 .sidebar {
   width: 248px; flex-shrink: 0;
-  background: var(--panel);
+  background: var(--mauve-magic);
   overflow-y: scroll;
   overflow-x: hidden;
   padding: 8px 8px 24px;
   display: flex; flex-direction: column; gap: 4px;
-  border-right: 3px solid #1a1a1a;
+  border-right: 3px solid var(--amethyst);
   /* ensure it takes full remaining height */
   min-height: 0;
   height: 100%;
 }
 .sidebar::-webkit-scrollbar { width: 5px; }
-.sidebar::-webkit-scrollbar-track { background: #1a1a1a; }
-.sidebar::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
-.sidebar::-webkit-scrollbar-thumb:hover { background: #888; }
+.sidebar::-webkit-scrollbar-track { background: #6A1A94; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--amethyst); border-radius: 3px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--mauve-magic); }
 
 /* CATEGORY */
 .category-header {
@@ -87,17 +91,17 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
   transition: background 0.15s;
   user-select: none;
 }
-.category-header:hover { background: rgba(255,255,255,0.05); }
+.category-header:hover { background: rgba(255,255,255,0.22); }
 .category-label {
   font-family: 'Fredoka One', cursive;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: var(--muted);
+  color: var(--yale-blue);
   display: flex; align-items: center; gap: 6px;
 }
 .category-arrow {
-  font-size: 0.65rem; color: #555;
+  font-size: 0.65rem; color: var(--amethyst);
   transition: transform 0.22s;
   flex-shrink: 0;
 }
@@ -123,7 +127,7 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 .item-card.unlocked {
   background: var(--card-unlocked);
   border-color: var(--card-unlocked-b);
-  box-shadow: 0 0 10px rgba(122,158,126,0.22);
+  box-shadow: 0 0 10px rgba(75,146,77,0.22);
   cursor: grab;
   animation: popIn 0.32s cubic-bezier(.175,.885,.32,1.275);
 }
@@ -143,13 +147,13 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
   flex-shrink: 0; width: 58px; height: 58px;
   display: flex; align-items: center; justify-content: center;
   position: relative; border-radius: 9px; overflow: hidden;
-  background: rgba(0,0,0,0.18);
+  background: rgba(100,0,160,0.1);
 }
 .card-img-col img {
   width: 54px; height: 54px; object-fit: contain; pointer-events: none; display: block;
 }
 .item-card:not(.unlocked):not(.placed) .card-img-col img {
-  filter: grayscale(1) brightness(0.38) sepia(0.25);
+  filter: grayscale(1) brightness(0.6) sepia(0.15);
 }
 .item-card.unlocked .card-img-col img,
 .item-card.placed   .card-img-col img {
@@ -171,43 +175,43 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 .letter-row { display: flex; flex-wrap: wrap; gap: 2px; align-items: flex-end; }
 .ltile {
   min-width: 16px; height: 22px;
-  border-bottom: 2.5px solid #555;
+  border-bottom: 2.5px solid #B070E8;
   display: flex; align-items: flex-end; justify-content: center;
   font-family: 'Fredoka One', cursive; font-size: 0.82rem;
   text-transform: uppercase; padding-bottom: 1px;
 }
-.ltile.given  { color: #bbb; border-color: #555; }
-.ltile.filled { color: var(--sage); border-color: var(--sage); }
-.ltile.blank  { color: #444; border-color: #444; }
-.ltile.done   { color: #7fe88a; border-color: #7fe88a; }
+.ltile.given  { color: #7A2090; border-color: #9A40C8; }
+.ltile.filled { color: var(--amethyst); border-color: var(--amethyst); }
+.ltile.blank  { color: #B070E8; border-color: #B070E8; }
+.ltile.done   { color: white ; border-color: var(--antique-white); }
 
 /* input */
 .card-input {
-  background: rgba(255,255,255,0.07);
-  border: 1.5px solid #555; border-radius: 7px;
-  color: var(--panel-text);
+  background: rgba(255,255,255,0.35);
+  border: 1.5px solid var(--amethyst); border-radius: 7px;
+  color: #3D1060;
   font-family: 'Fredoka One', cursive; font-size: 0.88rem;
   letter-spacing: 3px; text-transform: uppercase; text-align: center;
   padding: 4px 6px; width: 100%; outline: none;
   transition: border-color 0.22s, background 0.22s;
 }
-.card-input::placeholder { color: #888; letter-spacing: 4px; font-size: 0.82rem; font-family: 'Fredoka One', cursive; }
-.card-input:focus { border-color: var(--sage); background: rgba(122,158,126,0.08); }
-.card-input.correct { border-color: var(--terra); color: var(--terra); background: rgba(196,112,74,0.08); }
+.card-input::placeholder { color: #B070E8; letter-spacing: 4px; font-size: 0.82rem; font-family: 'Fredoka One', cursive; }
+.card-input:focus { border-color: var(--sea-green); background: rgba(75,146,77,0.12); }
+.card-input.correct { border-color: var(--vibrant-coral); color: var(--vibrant-coral); background: rgba(238,96,84,0.08); }
 .item-card.unlocked .card-input, .item-card.placed .card-input { display: none; }
 
 .card-status {
   font-size: 0.62rem; font-weight: 800; text-align: center;
   display: none;
 }
-.item-card.unlocked .card-status { display: block; color: var(--sage); }
-.item-card.placed   .card-status { display: block; color: #555; }
-.card-hint { font-size: 0.58rem; color: #555; text-align: center; font-style: italic; }
+.item-card.unlocked .card-status { display: block; color: var(--sea-green); }
+.item-card.placed   .card-status { display: block; color: var(--amethyst); }
+.card-hint { font-size: 0.58rem; color: var(--amethyst); text-align: center; font-style: italic; }
 .item-card.unlocked .card-hint, .item-card.placed .card-hint { display: none; }
 
 /* HOUSE */
 .house-area {
-  flex: 1; position: relative; overflow: hidden; background: #d8cfc5;
+  flex: 1; position: relative; overflow: hidden; background: var(--antique-white);
 }
 #house-bg {
   position: absolute; inset: 0;
@@ -224,8 +228,8 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
   position: absolute; inset: 0; z-index: 10; transition: background 0.2s;
 }
 #drop-zone.drag-over {
-  background: rgba(122,158,126,0.09);
-  outline: 3px dashed rgba(122,158,126,0.45); outline-offset: -6px;
+  background: rgba(75,146,77,0.09);
+  outline: 3px dashed rgba(75,146,77,0.45); outline-offset: -6px;
 }
 
 /* placed items */
@@ -243,7 +247,7 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 .placed-emoji { font-size: 3rem; line-height: 1; pointer-events: none; }
 .placed-label {
   font-family: 'Fredoka One', cursive; font-size: 0.6rem;
-  background: rgba(45,45,45,0.85); color: var(--cream);
+  background: rgba(141,59,183,0.85); color: var(--antique-white);
   padding: 1px 7px; border-radius: 8px;
   opacity: 0; transition: opacity 0.2s;
   pointer-events: none; white-space: nowrap; margin-top: 2px;
@@ -253,33 +257,33 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 /* LAYER POPUP */
 #layer-popup {
   display: none; position: fixed;
-  background: var(--panel); color: var(--panel-text);
+  background: var(--mauve-magic); color: var(--panel-text);
   border-radius: 12px; padding: 11px; z-index: 500;
   box-shadow: 0 6px 24px rgba(0,0,0,0.4); min-width: 155px;
 }
 #layer-popup h4 {
   font-family: 'Fredoka One', cursive; font-size: 0.88rem;
-  color: var(--sage); margin-bottom: 7px;
+  color: var(--sea-green); margin-bottom: 7px;
 }
 .layer-btn {
   display: block; width: 100%;
-  background: #3d3d3d; border: 1px solid #555;
-  color: var(--panel-text); padding: 5px 9px;
+  background: var(--amethyst); border: 1px solid var(--mauve-magic);
+  color: var(--antique-white); padding: 5px 9px;
   border-radius: 7px; margin-bottom: 4px;
   cursor: pointer; font-family: 'Nunito', sans-serif;
   font-size: 0.76rem; font-weight: 800; text-align: left;
   transition: background 0.16s;
 }
-.layer-btn:hover { background: var(--sage); }
-.layer-btn.danger { background: #5a2a2a; border-color: #8a3a3a; }
-.layer-btn.danger:hover { background: var(--terra); }
-.layer-btn.cancel { background: #3d3d3d; }
+.layer-btn:hover { background: var(--sea-green); }
+.layer-btn.danger { background: #8a2020; border-color: #c03030; }
+.layer-btn.danger:hover { background: var(--vibrant-coral); }
+.layer-btn.cancel { background: var(--amethyst); }
 
 /* EMPTY HINT */
 .empty-hint {
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%,-50%);
-  text-align: center; pointer-events: none; z-index: 5; color: #b8a898;
+  text-align: center; pointer-events: none; z-index: 5; color: #7a6040;
 }
 .empty-hint .big { font-size: 4.5rem; }
 .empty-hint p { font-family: 'Fredoka One', cursive; font-size: 1rem; margin-top: 8px; }
@@ -287,18 +291,18 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 /* INSTRUCTIONS */
 .instructions {
   position: absolute; bottom: 11px; right: 11px;
-  background: rgba(45,45,45,0.88); color: #999;
+  background: rgba(141,59,183,0.88); color: var(--antique-white);
   border-radius: 10px; padding: 7px 11px;
   font-size: 0.6rem; line-height: 1.75; z-index: 50;
   max-width: 170px; pointer-events: none;
 }
-.instructions strong { color: var(--cream); }
+.instructions strong { color: var(--antique-white); }
 
 /* TOAST */
 #toast {
   position: fixed; bottom: 26px; left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: var(--sage); color: #fff;
+  background: var(--sea-green); color: #fff;
   font-family: 'Fredoka One', cursive; font-size: 0.95rem;
   padding: 9px 24px; border-radius: 30px;
   box-shadow: 0 4px 18px rgba(0,0,0,0.25); z-index: 999;
@@ -385,7 +389,7 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
       2️⃣ Unlock the object 🔓<br>
       3️⃣ Drag it into the house<br>
       4️⃣ Move &amp; choose layer<br>
-      <em style="color:#555;">Click placed items to manage</em>
+      <em style="color:var(--sweet-salmon);">Click placed items to manage</em>
     </div>
   </main>
 </div>
@@ -409,9 +413,11 @@ const CATEGORIES = [
       { name: 'Bed',       hint: 'B__',     img: 'bed1.PNG'      },
       { name: 'Wardrobe',  hint: 'W_______',img: 'wardrobe1.PNG' },
       { name: 'Pillow',    hint: 'P_____',  img: 'pillow1.PNG'   },
-      { name: 'Blanket',   hint: 'B______', img: 'blanket1.PNG'  },
+      { name: 'Book shelf',   hint: 'B___ S____', img: 'bookshelf1.PNG'  },
       { name: 'Desk Chair',   hint: 'D___C____', img: 'desk_chair.PNG'  },
       { name: 'Desk Chair',   hint: 'D____ C____', img: 'desk_chair_side.PNG'  },
+      { name: 'Cabinet',  hint: 'C_______',img: 'cabinet.PNG' },
+      { name: 'Cabinet with drawers',  hint: 'C_______ With D______',img: 'cabinetwithdrawers.PNG' },
 
     ]
   },
@@ -431,8 +437,13 @@ const CATEGORIES = [
       { name: 'Fridge',    hint: 'F_____',  img: 'fridge1.PNG'   },
       { name: 'Oven',      hint: 'O___',    img: 'oven1.PNG'     },
       { name: 'Sink',      hint: 'S___',    img: 'sink1.PNG'     },
-      { name: 'Cup',       hint: 'C__',     img: 'cup1.PNG'      },
+      { name: 'Coffee machine',       hint: 'C_____ M______',     img: 'coffee_machine.PNG'      },
+      { name: 'Jug',       hint: 'J__',     img: 'jug.PNG'      },
+      { name: 'Bowls',       hint: 'B____',     img: 'bowls.PNG'      },
+      { name: 'Cups',       hint: 'C___',     img: 'cups.PNG'      },
+      { name: 'Bar Cups',       hint: 'B__ C___',     img: 'barcups.PNG'      },
       { name: 'Plate',     hint: 'P____',   img: 'plate1.PNG'    },
+      { name: 'Bowl of fruit',       hint: 'B___ of f____',     img: 'fruitbowl.PNG'      },
     ]
   },
   {
@@ -451,14 +462,33 @@ const CATEGORIES = [
       { name: 'Curtain',   hint: 'C______', img: 'curtain1.PNG'  },
     ]
   },
-  {
-    label: '🪴 Decorations',
+{
+      label: '🖼️ Decorations & Objects',
     items: [
-      { name: 'Plant',     hint: 'P____',   img: 'vase_w_plant1.PNG' },
-      { name: 'Mirror',    hint: 'M_____',  img: 'mirror1.PNG'   },
+      { name: 'Diploma',    hint: 'D_____',  img: 'diploma1.PNG'   },
       { name: 'Clock',     hint: 'C____',   img: 'clock1.PNG'    },
       { name: 'Picture',   hint: 'P_______',img: 'picture1.PNG'  },
-      { name: 'Vase',      hint: 'V___',    img: 'vase1.PNG'     },
+      { name: 'postits',      hint: 'P______',    img: 'postits.PNG'     },
+      { name: 'Calendar',      hint: 'C_____',    img: 'calendar.PNG'     },
+      { name: 'Trash Can',      hint: 'T____ C____',    img: 'trash_can.PNG' },
+      { name: 'Document Binders',      hint: 'D_______ B______',    img: 'document_binders.PNG' },
+    ]
+  },
+  {
+    label: '🪴 Plants',
+    items: [
+      { name: 'Tall Plant',     hint: 'T___ P____',   img: 'vase_w_plant1.PNG' },
+      { name: 'Desk Plant',    hint: 'D____ P____',  img: 'plant1.PNG'   },
+      { name: 'Desk Plant',    hint: 'D____ P____',  img: 'plant3.PNG'   },
+      { name: 'Vase with Plant',    hint: 'V___ W___ P____',  img: 'plant2.PNG'   },
+    ]
+  },
+    {
+    label: '💻electronic devices',
+    items: [
+      { name: 'desktop',     hint: 'D______',   img: 'desktop.PNG' },
+      { name: 'computer',    hint: 'C_______',  img: 'computer1.PNG'   },
+      { name: 'keyboard',    hint: 'K_______',  img: 'keyboard.PNG'   },
     ]
   },
 ];
@@ -601,10 +631,7 @@ function makeCard(item) {
 
     textCol.appendChild(inp);
 
-    const hint = document.createElement('div');
-    hint.className   = 'card-hint';
-    hint.textContent = 'Type: ' + item.name;
-    textCol.appendChild(hint);
+
   }
 
   const status = document.createElement('div');
