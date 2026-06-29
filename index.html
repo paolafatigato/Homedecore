@@ -410,6 +410,9 @@ const CATEGORIES = [
       { name: 'Wardrobe',  hint: 'W_______',img: 'wardrobe1.PNG' },
       { name: 'Pillow',    hint: 'P_____',  img: 'pillow1.PNG'   },
       { name: 'Blanket',   hint: 'B______', img: 'blanket1.PNG'  },
+      { name: 'Desk Chair',   hint: 'D___C____', img: 'desk_chair.PNG'  },
+      { name: 'Desk Chair',   hint: 'D____ C____', img: 'desk_chair_side.PNG'  },
+
     ]
   },
   {
@@ -437,6 +440,7 @@ const CATEGORIES = [
     items: [
       { name: 'Lamp',      hint: 'L___',    img: 'lamp1.PNG'     },
       { name: 'Candle',    hint: 'C_____',  img: 'candle1.PNG'   },
+      { name: 'desk Lamp',      hint: 'D____ L____',    img: 'desk_lamp.PNG'     },
     ]
   },
   {
@@ -569,27 +573,37 @@ function makeCard(item) {
   textCol.appendChild(letterRow);
 
   if (!item.unlocked && !item.placed) {
-    // Count how many blanks the student must fill
-    var blanksCount = (item.hint.match(/_/g) || []).length;
-    // Build a readable placeholder from the hint: C _ _ _ _
+    // Count total letters to type (all letters in name, no spaces)
+    var lettersCount = item.name.replace(/\s/g, '').length;
+
+    // Build placeholder: show hint pattern with spaces
     var hintDisplay = item.hint.split('').map(function(ch) {
-      return ch === '_' ? '_' : ch.toUpperCase();
+      if (ch === ' ') return '  ';   // double space to visually separate words
+      if (ch === '_') return '_';
+      return ch.toUpperCase();
     }).join(' ');
 
     const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.className = 'card-input';
-    inp.id = 'inp-' + item.id;
-    inp.maxLength = blanksCount;           // only the missing letters
-    inp.placeholder = hintDisplay;         // e.g. "C _ _ _ _"
+    inp.type        = 'text';
+    inp.className   = 'card-input';
+    inp.id          = 'inp-' + item.id;
+    inp.maxLength   = lettersCount;   // all letters in the name (no spaces)
+    inp.placeholder = hintDisplay;
     inp.autocomplete = 'off';
-    inp.spellcheck = false;
-    inp.addEventListener('input', function() { checkInput(item, inp); });
+    inp.spellcheck  = false;
+
+    inp.addEventListener('input', function() {
+      // Strip everything except letters (spaces not allowed in input)
+      var clean = inp.value.replace(/[^a-zA-Z]/g, '');
+      if (inp.value !== clean) { inp.value = clean; }
+      checkInput(item, inp);
+    });
+
     textCol.appendChild(inp);
 
     const hint = document.createElement('div');
-    hint.className = 'card-hint';
-    hint.textContent = blanksCount + ' missing letter' + (blanksCount === 1 ? '' : 's');
+    hint.className   = 'card-hint';
+    hint.textContent = 'Type: ' + item.name;
     textCol.appendChild(hint);
   }
 
@@ -620,49 +634,86 @@ function rebuildCard(item) {
 }
 
 // ─── LETTER TILES ─────────────────────────────────────────────────────────────
+// typed = only letters the student typed (no spaces).
+// Now the student types ALL letters in the name, and we compare with the hint pattern
 function renderTiles(container, item, typed) {
   container.innerHTML = '';
   if (item.unlocked) {
-    for (const ch of item.name) {
-      const t = document.createElement('span');
+    for (var ci = 0; ci < item.name.length; ci++) {
+      var ch = item.name[ci];
+      if (ch === ' ') {
+        var gap = document.createElement('span');
+        gap.style.cssText = 'display:inline-block;width:6px;';
+        container.appendChild(gap);
+        continue;
+      }
+      var t = document.createElement('span');
       t.className = 'ltile done';
       t.textContent = ch.toUpperCase();
       container.appendChild(t);
     }
     return;
   }
-  let ti = 0;
-  for (let i = 0; i < item.hint.length; i++) {
-    const t = document.createElement('span');
+  
+  // Build what the student should type (without spaces)
+  var shouldType = item.name.replace(/\s/g, '').toUpperCase();
+  
+  // Track position in typed string (letters only)
+  var typedIndex = 0;
+  
+  // Iterate through the hint display pattern
+  for (var i = 0; i < item.hint.length; i++) {
+    var hch = item.hint[i];
+    if (hch === ' ') {
+      // visual word-break gap, student never types this
+      var gap = document.createElement('span');
+      gap.style.cssText = 'display:inline-block;width:6px;';
+      container.appendChild(gap);
+      continue;
+    }
+    
+    var t = document.createElement('span');
     t.className = 'ltile';
-    if (item.hint[i] !== '_') {
+    
+    if (hch !== '_') {
+      // Given letter in hint
       t.classList.add('given');
-      t.textContent = item.hint[i].toUpperCase();
+      t.textContent = hch.toUpperCase();
+      // Still advance in the original name to stay in sync
+      typedIndex++;
     } else {
-      const ch = (typed[ti] || '');
-      t.textContent = ch ? ch.toUpperCase() : '_';
-      t.classList.add(ch ? 'filled' : 'blank');
-      ti++;
+      // Blank position: get from what student typed
+      var typedLetter = (typed[typedIndex] || '');
+      t.textContent = typedLetter ? typedLetter.toUpperCase() : '_';
+      t.classList.add(typedLetter ? 'filled' : 'blank');
+      typedIndex++;
     }
     container.appendChild(t);
   }
 }
 
 // ─── INPUT CHECK ──────────────────────────────────────────────────────────────
+// Now the student types ALL letters in the name (without spaces).
+// Compare what they typed with the name, ignoring spaces.
 function checkInput(item, inp) {
   if (item.unlocked) return;
-  const typed = inp.value.replace(/\s/g, '');
-  const lr = document.getElementById('lr-' + item.id);
+  
+  // Get only letters the student typed (no spaces)
+  var typed = inp.value.replace(/[^a-zA-Z]/g, '');
+  
+  // Update the visual tiles
+  var lr = document.getElementById('lr-' + item.id);
   if (lr) renderTiles(lr, item, typed);
 
-  let full = '', ti = 0;
-  for (let i = 0; i < item.hint.length; i++) {
-    if (item.hint[i] !== '_') { full += item.hint[i]; }
-    else { full += (typed[ti] || ''); ti++; }
-  }
-  if (full.toUpperCase() === item.name.toUpperCase()) {
+  // Compare: student's typed text vs the name (both without spaces)
+  var typedClean = typed.toUpperCase();
+  var nameClean = item.name.replace(/\s/g, '').toUpperCase();
+  
+  if (typedClean === nameClean) {
     inp.classList.add('correct');
     setTimeout(function() { unlockItem(item); }, 300);
+  } else {
+    inp.classList.remove('correct');
   }
 }
 
