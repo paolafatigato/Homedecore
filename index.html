@@ -317,15 +317,83 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body, html { overflow: visible !important; height: auto !important; margin: 0 !important; }
-  header, .sidebar, .instructions, #drop-zone, #layer-popup, #toast, .empty-hint, .placed-label { display: none !important; }
+  header, .sidebar, .instructions, #drop-zone, #layer-popup, #toast, .empty-hint, .placed-label, .zoom-controls { display: none !important; }
   .game-layout { display: block !important; height: 100vh !important; }
   .house-area { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; }
+}
+
+/* HOUSE CANVAS (scalable inner container) */
+#house-canvas {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
+/* ZOOM CONTROLS */
+.zoom-controls {
+  position: absolute;
+  top: 10px; left: 10px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 5px; z-index: 60;
+}
+.zoom-btn {
+  width: 36px; height: 36px;
+  background: var(--amethyst); color: var(--antique-white);
+  border: 2px solid var(--mauve-magic); border-radius: 50%;
+  font-family: 'Fredoka One', cursive; font-size: 1.2rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+  user-select: none; line-height: 1;
+}
+.zoom-btn:hover { background: var(--sea-green); }
+.zoom-label {
+  font-family: 'Fredoka One', cursive; font-size: 0.65rem;
+  color: var(--panel-text);
+  background: rgba(249,238,220,0.9); border-radius: 8px;
+  padding: 2px 6px; min-width: 36px; text-align: center;
+}
+
+/* MOBILE SIDEBAR TOGGLE */
+.sidebar-toggle {
+  display: none;
+  background: var(--amethyst); color: var(--antique-white);
+  border: 1.5px solid var(--mauve-magic); border-radius: 20px;
+  font-family: 'Fredoka One', cursive; font-size: 0.85rem;
+  padding: 4px 12px; cursor: pointer; flex-shrink: 0;
+  transition: background 0.18s;
+}
+.sidebar-toggle:hover { background: var(--vibrant-coral); }
+
+/* ── MOBILE ──────────────────────────────────────── */
+@media (max-width: 640px) {
+  header h1 { font-size: 1.05rem; }
+  .header-sub { display: none; }
+  .sidebar-toggle { display: block; }
+  .game-layout { position: relative; }
+  /* Sidebar slides in as overlay */
+  .sidebar {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    z-index: 200;
+    transform: translateX(-110%);
+    transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+    width: 230px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.35);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .house-area { width: 100%; }
+  .zoom-controls { top: 7px; left: 7px; }
+  .zoom-btn { width: 32px; height: 32px; font-size: 1rem; }
+  .instructions { font-size: 0.5rem; max-width: 120px; bottom: 6px; right: 6px; padding: 5px 8px; line-height: 1.6; }
+  .score-badge { font-size: 0.75rem; padding: 3px 9px; }
+  .print-btn { font-size: 0.75rem; padding: 3px 9px; }
 }
 </style>
 </head>
 <body>
 
 <header>
+  <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
   <h1>🏠 Home Sweet Vocab</h1>
   <span class="header-sub">Spell the word → unlock → decorate!</span>
   <span class="score-badge" id="score-display">✔ 0 / 0</span>
@@ -336,6 +404,13 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
   <aside class="sidebar" id="sidebar"></aside>
 
   <main class="house-area" id="house-area">
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoom-in" title="Ingrandisci">+</button>
+      <span class="zoom-label" id="zoom-label">100%</span>
+      <button class="zoom-btn" id="zoom-out" title="Rimpicciolisci">−</button>
+      <button class="zoom-btn" id="zoom-reset" title="Reset zoom" style="font-size:0.75rem;">↺</button>
+    </div>
+    <div id="house-canvas">
     <img id="house-bg" src="home1.PNG" alt="House"
          onerror="this.style.display='none'; document.getElementById('house-svg').style.display='block';" />
     <svg id="house-svg" viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg"
@@ -385,6 +460,7 @@ header h1 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; }
       <p>Spell a word to unlock,<br>then drag it home!</p>
     </div>
     <div id="drop-zone"></div>
+    </div><!-- /#house-canvas -->
     <div class="instructions">
       <strong>How to play:</strong><br>
       1️⃣ Type the missing letters<br>
@@ -511,9 +587,15 @@ let dragging   = null; // item being dragged from sidebar
 let activeEl   = null; // placed DOM element selected for layer popup
 let zTop       = 30;
 let score      = 0;
+let zoomLevel  = 1;
+let panX = 0, panY = 0;
+const MIN_ZOOM  = 0.4;
+const MAX_ZOOM  = 2.5;
+const ZOOM_STEP = 0.2;
 
 const sidebar     = document.getElementById('sidebar');
 const houseArea   = document.getElementById('house-area');
+const houseCanvas = document.getElementById('house-canvas');
 const dropZone    = document.getElementById('drop-zone');
 const scoreEl     = document.getElementById('score-display');
 const toastEl     = document.getElementById('toast');
@@ -775,42 +857,76 @@ dropZone.addEventListener('drop', function(e) {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
   if (!dragging) return;
-  const r = houseArea.getBoundingClientRect();
-  placeItem(dragging, e.clientX - r.left, e.clientY - r.top);
+  placeItem(dragging, e.clientX, e.clientY);
   dragging = null;
 });
 
-// Touch drop
+// Touch drop + canvas pan
 var tGhost = null;
-document.addEventListener('touchmove', function(e) {
-  if (!dragging) return;
-  const t = e.touches[0];
-  if (!tGhost) {
-    tGhost = document.createElement('div');
-    tGhost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;opacity:0.7;font-size:2.5rem;';
-    tGhost.textContent = EMOJI[dragging.name.toLowerCase()] || '📦';
-    document.body.appendChild(tGhost);
+var touchPanId = null, touchPanStartX, touchPanStartY, touchPanStartPX, touchPanStartPY;
+// Single-finger pan starts when touching empty canvas (not a placed item)
+houseCanvas.addEventListener('touchstart', function(e) {
+  if (dragging) return; // sidebar drag takes priority
+  if (e.touches.length === 1) {
+    touchPanId      = e.touches[0].identifier;
+    touchPanStartX  = e.touches[0].clientX;
+    touchPanStartY  = e.touches[0].clientY;
+    touchPanStartPX = panX;
+    touchPanStartPY = panY;
   }
-  tGhost.style.left = (t.clientX - 22) + 'px';
-  tGhost.style.top  = (t.clientY - 22) + 'px';
-  e.preventDefault();
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+  // Sidebar card drag → show ghost
+  if (dragging) {
+    var t = e.touches[0];
+    if (!tGhost) {
+      tGhost = document.createElement('div');
+      tGhost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;opacity:0.7;font-size:2.5rem;';
+      tGhost.textContent = EMOJI[dragging.name.toLowerCase()] || '📦';
+      document.body.appendChild(tGhost);
+    }
+    tGhost.style.left = (t.clientX - 22) + 'px';
+    tGhost.style.top  = (t.clientY - 22) + 'px';
+    e.preventDefault();
+    return;
+  }
+  // Single-finger canvas pan
+  if (touchPanId !== null && e.touches.length === 1 && e.touches[0].identifier === touchPanId) {
+    panX = touchPanStartPX + (e.touches[0].clientX - touchPanStartX);
+    panY = touchPanStartPY + (e.touches[0].clientY - touchPanStartY);
+    clampPan();
+    applyZoom();
+    e.preventDefault();
+  }
 }, { passive: false });
 
 document.addEventListener('touchend', function(e) {
+  // Reset pan touch tracking
+  if (touchPanId !== null) {
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === touchPanId) { touchPanId = null; break; }
+    }
+  }
   if (!dragging) return;
   if (tGhost) { tGhost.remove(); tGhost = null; }
   const t = e.changedTouches[0];
   const r = houseArea.getBoundingClientRect();
-  const x = t.clientX - r.left, y = t.clientY - r.top;
-  if (x >= 0 && y >= 0 && x <= r.width && y <= r.height) placeItem(dragging, x, y);
+  if (t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom) {
+    placeItem(dragging, t.clientX, t.clientY);
+  }
   dragging = null;
 });
 
 // ─── PLACE ITEM ───────────────────────────────────────────────────────────────
-function placeItem(item, x, y) {
+function placeItem(item, clientX, clientY) {
   if (item.placed) return;
   item.placed = true;
   rebuildCard(item);
+
+  const r = houseArea.getBoundingClientRect();
+  const x = (clientX - r.left - panX) / zoomLevel;
+  const y = (clientY - r.top  - panY) / zoomLevel;
 
   const el = document.createElement('div');
   el.className = 'placed-item';
@@ -856,8 +972,8 @@ function placeItem(item, x, y) {
     if (!isDragging) return;
     const dx = e.clientX - ox, dy = e.clientY - oy;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
-    el.style.left = (oL + dx) + 'px';
-    el.style.top  = (oT + dy) + 'px';
+    el.style.left = (oL + dx / zoomLevel) + 'px';
+    el.style.top  = (oT + dy / zoomLevel) + 'px';
   });
   document.addEventListener('mouseup', function() { isDragging = false; });
   el.addEventListener('click', function(e) {
@@ -866,8 +982,38 @@ function placeItem(item, x, y) {
   el.addEventListener('contextmenu', function(e) {
     e.preventDefault(); showLayerPopup(el, e.clientX, e.clientY);
   });
+  // ── Touch drag: reposition placed item on mobile ──────────────────────────
+  el.addEventListener('touchstart', function(e) {
+    if (dragging) return; // sidebar drag in progress — don't interfere
+    if (e.touches.length !== 1) return;
+    isDragging = true; moved = false;
+    var t = e.touches[0];
+    ox = t.clientX; oy = t.clientY;
+    oL = parseInt(el.style.left); oT = parseInt(el.style.top);
+    el.style.zIndex = zTop++;
+    e.stopPropagation(); // prevent canvas-pan from starting
+  }, { passive: true });
+  el.addEventListener('touchmove', function(e) {
+    if (!isDragging || e.touches.length !== 1) return;
+    var t = e.touches[0];
+    var dx = t.clientX - ox, dy = t.clientY - oy;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+    el.style.left = (oL + dx / zoomLevel) + 'px';
+    el.style.top  = (oT + dy / zoomLevel) + 'px';
+    e.stopPropagation();
+    e.preventDefault();
+  }, { passive: false });
+  el.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    if (!moved) {
+      var t = e.changedTouches[0];
+      e.stopPropagation();
+      showLayerPopup(el, t.clientX, t.clientY);
+    }
+  }, { passive: true });
 
-  houseArea.appendChild(el);
+  houseCanvas.appendChild(el);
   updateEmptyHint();
 }
 
@@ -985,6 +1131,107 @@ function showToast(msg) {
   toastEl.classList.add('show');
   setTimeout(function() { toastEl.classList.remove('show'); }, 2800);
 }
+
+// ─── ZOOM & PAN ───────────────────────────────────────────────────────────────
+function clampPan() {
+  var r = houseArea.getBoundingClientRect();
+  panX = Math.max(r.width  * (1 - zoomLevel), Math.min(0, panX));
+  panY = Math.max(r.height * (1 - zoomLevel), Math.min(0, panY));
+}
+function applyZoom() {
+  houseCanvas.style.transformOrigin = '0 0';
+  houseCanvas.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoomLevel + ')';
+  document.getElementById('zoom-label').textContent = Math.round(zoomLevel * 100) + '%';
+  dropZone.style.cursor = zoomLevel > 1.01 ? 'grab' : '';
+}
+// Zoom around an anchor point (coords relative to houseArea top-left)
+function zoomTo(newZoom, anchorX, anchorY) {
+  var cax = (anchorX - panX) / zoomLevel;
+  var cay = (anchorY - panY) / zoomLevel;
+  zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, parseFloat(newZoom.toFixed(2))));
+  panX = anchorX - cax * zoomLevel;
+  panY = anchorY - cay * zoomLevel;
+  clampPan();
+  applyZoom();
+}
+document.getElementById('zoom-in').addEventListener('click', function() {
+  var r = houseArea.getBoundingClientRect();
+  zoomTo(zoomLevel + ZOOM_STEP, r.width / 2, r.height / 2);
+});
+document.getElementById('zoom-out').addEventListener('click', function() {
+  var r = houseArea.getBoundingClientRect();
+  zoomTo(zoomLevel - ZOOM_STEP, r.width / 2, r.height / 2);
+});
+document.getElementById('zoom-reset').addEventListener('click', function() {
+  zoomLevel = 1; panX = 0; panY = 0; applyZoom();
+});
+
+// Desktop panning: drag on empty canvas area (drop-zone is below placed items)
+(function() {
+  var isPanning = false, psx, psy, pspx, pspy;
+  dropZone.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    isPanning = true;
+    psx = e.clientX; psy = e.clientY;
+    pspx = panX; pspy = panY;
+    dropZone.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isPanning) return;
+    panX = pspx + (e.clientX - psx);
+    panY = pspy + (e.clientY - psy);
+    clampPan();
+    applyZoom();
+  });
+  document.addEventListener('mouseup', function() {
+    if (isPanning) { isPanning = false; applyZoom(); }
+  });
+})();
+
+// Pinch-to-zoom (two fingers, zooms around midpoint)
+(function() {
+  var lastDist = null;
+  houseArea.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      var dx = e.touches[0].clientX - e.touches[1].clientX;
+      var dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastDist = Math.sqrt(dx*dx + dy*dy);
+      touchPanId = null; // cancel single-finger pan when pinching
+    }
+  }, { passive: true });
+  houseArea.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 2 && lastDist !== null) {
+      var dx = e.touches[0].clientX - e.touches[1].clientX;
+      var dy = e.touches[0].clientY - e.touches[1].clientY;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var r = houseArea.getBoundingClientRect();
+      var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+      var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+      zoomTo(zoomLevel * (dist / lastDist), midX, midY);
+      lastDist = dist;
+      e.preventDefault();
+    }
+  }, { passive: false });
+  houseArea.addEventListener('touchend', function() { lastDist = null; }, { passive: true });
+})();
+
+// ─── MOBILE SIDEBAR TOGGLE ──────────────────────────────────────────────────
+(function() {
+  var toggle = document.getElementById('sidebar-toggle');
+  if (!toggle) return;
+  toggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    sidebar.classList.toggle('open');
+  });
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 640 && sidebar.classList.contains('open')) {
+      if (!sidebar.contains(e.target) && e.target !== toggle) {
+        sidebar.classList.remove('open');
+      }
+    }
+  });
+})();
 </script>
 </body>
 </html>
